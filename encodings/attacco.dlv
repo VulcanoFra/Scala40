@@ -1,0 +1,32 @@
+% 															GUESS & CHECK
+
+% combinazioneTris(S1,S2,S3,V,IDCOMB) --> restituisce i semi del tris, il valore di esso e la posizione sul tavolo
+% esempio --> combinazioneTris(q,p,f 5, 3) --> cioè è presente un tris di 5 con semi quadri,picche e fiori in posizione 3 sul tavolo
+
+%  Data una combinazione di tris, se esiste una carta con un seme diverso e con lo stesso valore allora possiamo attaccarla
+attacco(IDCOMB, IDCARD) | nonAttacco(IDCOMB, IDCARD):- combinazioneTris(S1,S2,S3,V,IDCOMB), card(S4,V,IDCARD), S4!=S1, S4!=S2, S4!=S3.
+
+% combinazioneScala(S,V1,V3,IDCOMB) --> restituisce il seme della scala, il valore minimo, il valore massimo e la posizione sul tavolo
+% esempio --> combinazioneScala(q,1,5,3) --> cioè è presente una scala di quadri che va da 1 a 5 e si trova in posizione 3 sul tavolo
+
+% Data una scala, se esiste una carta con seme uguale e valore aumentato di 1 del massimo possiamo attaccarla
+attacco(IDCOMB, IDCARD) | nonAttacco(IDCOMB, IDCARD):- combinazioneScala(S,V1,V3,IDCOMB), card(S, V4, IDCARD), V4=V3+1.
+
+% Data una scala, se esiste una carta con seme uguale e valore diminuito di 1 del minimo possiamo attaccarla
+attacco(IDCOMB, IDCARD) | nonAttacco(IDCOMB, IDCARD):- combinazioneScala(S,V1,V3,IDCOMB), card(S, V4, IDCARD), V4=V1-1.
+
+
+
+% 																STRONG
+
+%Per ogni carta contiamo le combinazioni a cui questa carta viene attaccata e questo conteggio non può essere superiore a 1
+:- card(_,_,IDCARD), #count{IDCOMB,IDCARD: attacco(IDCOMB,IDCARD)} >1.
+:- #count{IDCARD, IDCOMB: attacco(IDCOMB,IDCARD)} >1.
+
+
+% 																 WEAK
+
+% Se è possibile fare un attacco è sempre da preferire
+:~ nonAttacco(A,B). [1@1, A,B]
+
+

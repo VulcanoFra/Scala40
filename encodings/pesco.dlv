@@ -1,0 +1,23 @@
+% 															GUESS & CHECK
+
+% Data l'ultima carta scartata scegliamo se pescarla oppure no
+pesco(ID) | nonPesco(ID):- cartaScarto(_,_,ID).
+
+
+% 															     WEAK
+
+% Data una carta scarto preferiamo pescarla se abbiamo in mano una carta con stesso valore e seme diverso
+:~ cartaScarto(S1,V,ID1), card(S2,V,ID2), S1!=S2, nonPesco(ID1). [1@2, S1,S2,V,ID1,ID2]
+
+% Data una carta scarto se abbiamo la stessa identica carta (che si distingue mediante l'ID) allora preferiamo non pescarla
+:~ cartaScarto(S,V,ID1), card(S,V,ID2), ID1!=ID2, pesco(ID1). [1@3, S,V,ID1,ID2]
+
+% Data una carta scarto se questa può tornare utile per una scala preferiamo pescarla
+:~ cartaScarto(S,V,ID1), card(S,V2,ID2), V2=V+1, nonPesco(ID1). [1@2, S,V, V2,ID1,ID2]
+:~ cartaScarto(S,V,ID1), card(S,V-1,ID2), nonPesco(ID1). [1@2, S,V,ID1,ID2]
+
+% Se agli altri livelli di constraints non ho preferenze allora preferisco non pescarla in quanto non particolarmente utile
+:~ pesco(ID). [1@1, ID]
+
+% Data una carta scarto Jolly preferiamo con assoluta priorità pescarla
+:~ cartaScarto("Jolly", _, ID), nonPesco(ID). [1@4, ID]

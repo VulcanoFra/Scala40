@@ -1,0 +1,61 @@
+% 															GUESS & CHECK
+
+% esempio tris --> tris (2,5,7) --> abbiamo generato un tris delle carte con id 2,5,7 
+% esempio quatris --> quatris (2,5,7,9) --> abbiamo generato un quatris delle carte con id 2,5,7 ,9
+% esempio scala --> scala (2,5,7) --> abbiamo generato una scala delle carte con id 2,5,7 
+
+% Date tre carte con seme diverso e valore uguale scegliamo se fare un tris o meno
+tris(ID1,ID2,ID3) | nonTris(ID1,ID2,ID3) :- card(S1,V,ID1), card(S2,V,ID2), card(S3,V,ID3), S1 < S2, S2 < S3.
+
+% Date quattro carte con seme diverso e valore uguale scegliamo se fare un quatris o meno
+quatris(ID1,ID2,ID3,ID4) | nonQuatris(ID1,ID2,ID3,ID4):- card(S1,V,ID1), card(S2,V,ID2), card(S3,V,ID3), card(S4,V,ID4), S1 < S2, S2 < S3, S3 < S4.
+
+% Date tre carte con seme uguale e valore consecutivo scegliamo se fare una scala o meno
+scala(ID1, ID2, ID3) | nonScala(ID1, ID2, ID3):- card(S, N1, ID1), card(S,N1+1, ID2), card(S,N1+2, ID3).
+
+% Date tre carte con seme diverso di cui uno jolly e valore uguale scegliamo se fare un tris o meno
+tris(ID1,ID2,ID3) | nonTris(ID1,ID2,ID3) :- card(S1,_,ID1), card(S2,V,ID2), card(S3,V,ID3), S2<S3, S2!="Jolly", S3!="Jolly" , S1="Jolly".
+
+% Date quattro carte con seme diverso di cui uno Jolly e valore uguale scegliamo se fare un quatris o meno
+quatris(ID1,ID2,ID3,ID4) | nonQuatris(ID1,ID2,ID3,ID4):- card(S1,_,ID1), card(S2,V,ID2), card(S3,V,ID3), card(S4,V,ID4), S2<S3, S3<S4, S1="Jolly", S2!="Jolly", S3!="Jolly".
+
+
+% Date tre carte con seme uguale e valore consecutivo di cui il primo Jolly scegliamo se fare una scala o meno
+scala(ID1, ID2, ID3) | nonScala(ID1, ID2, ID3):- card("Jolly", _, ID1), card(S,N1, ID2), card(S,N1+1, ID3).
+
+% Date tre carte con seme uguale e valore consecutivo di cui il secondo Jolly scegliamo se fare una scala o meno
+scala(ID1, ID2, ID3) | nonScala(ID1, ID2, ID3):- card(S,N1, ID1), card("Jolly", _, ID2), card(S,N1+2, ID3).
+
+% Date tre carte con seme uguale e valore consecutivo di cui il terzo Jolly scegliamo se fare una scala o meno
+scala(ID1, ID2, ID3) | nonScala(ID1, ID2, ID3):- card(S,N1, ID2), card(S,N1+1, ID3), card("Jolly", _, ID1).
+
+% 															VINCOLI PER GLI STRONG
+
+% Contiamo e salviamo le occorrenze di una carta sulle scale
+totaleScala(ID1, TOT):- card(_,_,ID1), #count{ID1,ID2,ID3 : scala(ID1,ID2,ID3)}=X, #count{ID1,ID2,ID3 : scala(ID2,ID1,ID3)}=Y, #count{ID1,ID2,ID3 : scala(ID2,ID3,ID1)}=Z, TOT=X+Y+Z.
+
+% Contiamo e salviamo le occorrenze di una carta sui tris
+totaleTris(ID1, TOT):- card(_,_,ID1), #count{ID1,ID2,ID3 : tris(ID1,ID2,ID3)}=X, #count{ID1,ID2,ID3 : tris(ID2,ID1,ID3)}=Y, #count{ID1,ID2,ID3 : tris(ID2,ID3,ID1)}=Z, TOT=X+Y+Z.
+
+% Contiamo e salviamo le occorrenze di una carta sui quatris
+totaleQuatris(ID1, TOT):- card(_,_,ID1), #count{ID1,ID2,ID3,ID4 : quatris(ID1,ID2,ID3,ID4)}=X, #count{ID1,ID2,ID3,ID4 : quatris(ID2,ID1,ID3,ID4)}=Y, #count{ID1,ID2,ID3,ID4 : quatris(ID2,ID3,ID1, ID4)}=Z, #count{ID1,ID2,ID3,ID4 : quatris(ID2,ID3,ID4, ID1)}=K, TOT=X+Y+Z+K.
+
+% Contiamo e salviamo le occorrenze della somma di tris, scala e quatris, che ci serviranno per lo strong constraint
+totaleComplessivo(ID1,TOT):- card(_,_,ID1), totaleTris(ID1,TOT1), totaleQuatris(ID1,TOT2), totaleScala(ID1,TOT3), TOT=TOT1+TOT2+TOT3.
+
+% 																STRONG
+
+% Non è possibile che una carta sia stata utilizzata più di una volta
+:- card(_,_,ID1), totaleComplessivo(ID1,TOT), TOT>1.
+
+% 															     WEAK
+
+
+% Per ogni nonTris paghiamo il costo del suo punteggio sommato, preferendo quelle con punteggio più alto
+:~ nonTris(ID1,ID2,ID3), card(S1, N1, ID1), card(S2,N2,ID2), card(S3,N3, ID3). [N1+N2+N3@1, ID1,ID2,ID3]
+
+% Per ogni nonQuatris paghiamo il costo del suo punteggio sommato, preferendo quelle con punteggio più alto
+:~ nonQuatris(ID1,ID2,ID3,ID4), card(S1, N1, ID1), card(S2,N2,ID2), card(S3,N3, ID3), card(S4,N4,ID4). [N1+N2+N3+N4@1, ID1,ID2,ID3,ID4]
+
+% Per ogni nonScala paghiamo il costo del suo punteggio sommato, preferendo quelle con punteggio più alto
+:~ nonScala(ID1,ID2,ID3), card(S1, N1, ID1), card(S2,N2,ID2), card(S3,N3, ID3). [N1+N2+N3@1, ID1,ID2,ID3]
